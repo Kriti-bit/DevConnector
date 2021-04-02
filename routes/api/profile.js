@@ -109,4 +109,140 @@ router.post('/', [auth,[
     }
 })
 
+
+//@route    GET api/profile
+//@desc     Get all profiles (using profile id)
+//@access   Public
+
+
+router.get('/', async (req,res) =>{
+    try {
+        const profiles = await Profile.find().populate('user', [ 'name','avatar' ] ) //From user collection, bring name and avatar
+        res.json(profiles)
+    } catch (err) {
+    console.error(err.message)
+    res.status(500).send('Server Error')   
+    }
+})
+
+//@route    GET api/profile/user/:user_id    //Here :user_id represents a place holder
+//@desc     Get all profiles (using user id)
+//@access   Public
+
+
+router.get('/user/:user_id', async (req,res) =>{
+    try {
+        const profile = await Profile.findOne({ user: req.params.user_id }).populate('user', [ 'name','avatar' ] ) //From user collection, bring name and avatar
+
+        if(!profile)
+            return res.status(400).json({ msg: 'Profile Not found'})
+
+            res.json(profile)
+
+    } catch (err) {
+
+        if(err.kind == 'ObjectId') {
+            return res.status(400).json({ msg: 'Profile Not found'})
+        }
+
+    console.error(err.message)
+    res.status(500).send('Server Error')   
+    }
+})
+
+//@route    DELETE api/profile
+//@desc     Delete profile and posts
+//@access   Private
+
+
+router.delete('/',auth , async (req,res) =>{
+    try {
+        //todo = remove user posts
+
+        //Remove Profile
+        await Profile.findOneAndRemove({ user : req.user.id })
+        await User.findOneAndRemove({ _id : req.user.id })
+        res.json({msg:'User Removed'})
+    } catch (err) {
+    console.error(err.message)
+    res.status(500).send('Server Error')   
+    }
+})
+
+//@route    PUT api/profile/experience
+//@desc     Add profile experience
+//@access   Private
+
+router.put('/experience',[auth,[
+    check('title', 'Title is required').not().isEmpty(),
+    check('company', 'Company is required').not().isEmpty(),
+    check('from', 'From date is required').not().isEmpty()
+]],async(req,res) => {
+    const errors = validationResult(req)
+    if(!errors.isEmpty())
+    {
+        return res.status(400).json({ errors: errors.array() })
+    }
+
+    //Destructuring the request
+
+    const {
+        title,
+        company,
+        location,
+        from,
+        to,
+        current,
+        description
+    } = req.body
+
+    const newExp = {
+        title,
+        company,
+        location,
+        from,
+        to,
+        current,
+        description
+    }
+
+        try {
+            const profile = await Profile.findOne({ user: req.user.id })
+            profile.experience.unshift(newExp) //Add elements from the beginning instead of adding them from the end. Or, in reverse order. Most recent elements are added first
+            await profile.save()
+            res.json(profile)
+            
+        } catch (err) {
+            console.error(err.message)
+            res.status(500).send('Server Error')
+        }
+    
+
+})
+
+//@route    DELETE api/profile/experience/:exp_id
+//@desc     Delete experience from profile
+//@access   Private
+
+router.delete('/experience/:exp_id',auth, async (req,res) => 
+{
+    try {
+
+        const profile = await Profile.findOne({ user: req.user.id })
+
+        //Get Remove Index
+        const removeIndex = profile.experience.map( item => item.id ).indexOf(req.params.exp_id)
+
+        profile.experience.splice(removeIndex ,1) //As we want to remove only a splice 
+
+        await profile.save()
+
+        res.json(profile)
+
+    } catch (err) {
+        console.error(err.message)
+        res.status(500).send('Server Error') 
+    }
+}) 
+
 module.exports = router
