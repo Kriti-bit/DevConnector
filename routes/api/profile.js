@@ -1,4 +1,5 @@
 const express = require('express')
+const request = require('request')
 const router = express.Router()
 const config = require('config');
 const auth = require('../../middleware/auth')
@@ -244,5 +245,112 @@ router.delete('/experience/:exp_id',auth, async (req,res) =>
         res.status(500).send('Server Error') 
     }
 }) 
+
+//@route    PUT api/profile/education
+//@desc     Add profile education
+//@access   Private
+
+router.put('/education',[auth,[
+    check('school', 'school is required').not().isEmpty(),
+    check('degree', 'degree is required').not().isEmpty(),
+    check('fieldofstudy', 'fieldofstudy is required').not().isEmpty(),
+    check('from', 'From date is required').not().isEmpty()
+]],async(req,res) => {
+    const errors = validationResult(req)
+    if(!errors.isEmpty())
+    {
+        return res.status(400).json({ errors: errors.array() })
+    }
+
+    //Destructuring the request
+
+    const {
+        school,
+        degree,
+        fieldofstudy,
+        from,
+        to,
+        current,
+        description
+    } = req.body
+
+    const newEdu = {
+        school,
+        degree,
+        fieldofstudy,
+        from,
+        to,
+        current,
+        description
+    }
+
+        try {
+            const profile = await Profile.findOne({ user: req.user.id })
+            profile.education.unshift(newEdu) //Add elements from the beginning instead of adding them from the end. Or, in reverse order. Most recent elements are added first
+            await profile.save()
+            res.json(profile)
+            
+        } catch (err) {
+            console.error(err.message)
+            res.status(500).send('Server Error')
+        }
+    
+
+})
+
+//@route    DELETE api/profile/education/:edu_id
+//@desc     Delete education from profile
+//@access   Private
+
+router.delete('/education/:edu_id',auth, async (req,res) => 
+{
+    try {
+
+        const profile = await Profile.findOne({ user: req.user.id })
+
+        //Get Remove Index
+        const removeIndex = profile.education.map( item => item.id ).indexOf(req.params.edu_id)
+
+        profile.experience.splice(removeIndex ,1) //As we want to remove only a splice 
+
+        await profile.save()
+
+        res.json(profile)
+
+    } catch (err) {
+        console.error(err.message)
+        res.status(500).send('Server Error') 
+    }
+})
+
+//@route    GET api/profile/github/:username
+//@desc     Get user repos from GitHub
+//@access   Public
+
+router.get('/github/:username' , (req,res) =>{
+    try {
+        const options = {
+            uri : `http://api.github.com/users/${req.params.username}/repos?per_page=5&sort=created:asc&client_id=${config.get('githubClientId')}&client_secrets=${config.get('githubSecret')}`, // `` is used here and not this ''
+            method : 'GET',
+            headers: {'user-agent' : 'node.js' }
+        }
+
+        request(options,(error, response, body) =>{
+            if(error) console.error(error)
+
+            if(response.statusCode !== 200)
+            {
+                return res.status(404).json({ msg: 'No GitHub profile found' })
+            }
+
+                res.json(JSON.parse(body))
+
+        })
+
+    } catch (err) {
+        console.error(err.message)
+        res.status(500).send('Server Error')       
+    }
+})
 
 module.exports = router
