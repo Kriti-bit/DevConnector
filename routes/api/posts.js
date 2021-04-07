@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const {check , validationResult} = require('express-validator')
 const auth = require('../../middleware/auth')
-
+const config = require('config')
 const Post = require('../../models/Post')
 const Profile = require('../../models/Profile')
 const User = require('../../models/User')
@@ -156,6 +156,44 @@ router.put('/unlike/:id',auth, async (req,res)=>{
     } catch (err) {
         console.error(err.message)        
         return res.status(500).send('Server Error') 
+    }
+})
+
+//@route    POST api/posts/comment/:id
+//@desc     Comment on a post
+//@access   Private
+
+router.post('/comment/:id',[auth, [check ('text','Text is required').not().isEmpty() ]], async (req,res) => 
+{
+    const errors = validationResult(req)
+    if(!errors.isEmpty())
+    {
+        return res.status(400).json( { errors: errors.array() } )
+    }
+
+
+    try {
+        const user = await User.findById(req.user.id).select('-password')
+        const post = await Post.findById(req.params.id)
+        
+        const newComment = { 
+            text: req.body.text,
+            name: user.name,
+            avatar: user.avatar,
+            user: req.user.id
+        }//Not a database collection, this is just an oject so we removed 'new' keyword
+        
+        //console.log(post)
+
+       post.comments.unshift(newComment)
+        
+        await post.save()
+
+        res.json(post.comments) //sending back all comments
+
+    } catch (err) {
+        console.error(err.message)        
+        return res.status(500).send('Server Error')
     }
 })
 

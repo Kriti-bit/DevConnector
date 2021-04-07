@@ -10,6 +10,7 @@
   "author": "Kriti",
   "license": "ISC",
   "dependencies": {
+    "@ng-toolkit/universal": "^8.1.0",
     "bcryptjs": "^2.4.3",
     "config": "^3.3.6",
     "express": "^4.17.1",
