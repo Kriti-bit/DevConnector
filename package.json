@@ -4,11 +4,11 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "client-install" : "npm install --prefix client",
+    "client-install": "npm install --prefix client",
     "start": "node server",
     "server": "nodemon server",
     "client": "npm start --prefix client",
-    "dev": "concurrently \"npm run server\" \"npm run client\""    
+    "dev": "concurrently \"npm run server\" \"npm run client\""
   },
   "author": "Kriti",
   "license": "ISC",
@@ -16,6 +16,7 @@
     "@ng-toolkit/universal": "^8.1.0",
     "bcryptjs": "^2.4.3",
     "config": "^3.3.6",
+    "dotenv": "^10.0.0",
     "express": "^4.17.1",
     "express-validator": "^6.10.0",
     "gravatar": "^1.8.1",
