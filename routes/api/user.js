@@ -114,10 +114,12 @@ router.post('/login',[
         }
         
         const payload = {
-            user :
-            {
-                id: user.id //same as _id
-            }
+            //user :
+            //{
+                id: user.id, //same as _id
+                name: user.name, 
+                avatar: user.avatar
+            //}
         }
 
         jwt.sign(payload,process.env.JWT_Secret, //jwtSecret defind in default.json
