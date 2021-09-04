@@ -6,6 +6,7 @@ import setAuthToken from './utils/setAuthToken';
 import { logoutUser, setCurrentUser } from './actions/authActions';
 
 import PrivateRoute from './components/common/PrivateRoute';
+import CreateProfile from './components/create-profile/CreateProfile';
 
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -50,6 +51,9 @@ function App() {
                 <Route exact path = "/login" component = {Login}/>
                 <Switch> 
                   <PrivateRoute exact path = "/dashboard" component = {Dashboard}/>
+                </Switch>
+                <Switch> 
+                  <PrivateRoute exact path = "/create-profile" component = {CreateProfile}/>
                 </Switch>
               </div>
             <Footer/> 
